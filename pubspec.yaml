@@ -1,0 +1,5 @@
+name: dart-service-worker
+version: 0.1.0
+description: Service Worker library for Dart.
+environment:
+  sdk: '>=1.0.0 <2.0.0'
