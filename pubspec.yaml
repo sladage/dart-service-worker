@@ -1,4 +1,4 @@
-name: dart-service-worker
+name: dart_service_worker
 version: 0.1.0
 description: Service Worker library for Dart.
 environment:
