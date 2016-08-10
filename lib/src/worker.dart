@@ -5,37 +5,95 @@ import 'dart:js';
 import 'shared.dart';
 
 class ServiceWorkerClient {
-  void postMessage(data) {}
+  ServiceWorkerClient.internal(this._internal) {}
+
+  /// Send message to client.
+  void postMessage(data) {
+    _internal.callMethod("postMessage", [data]);
+  }
+
+  /// Returns the universally unique identifier of the service worker client.
+  String get id => _internal["id"];
+
+  /// Returns the URL of the service worker client.
+  String get url => _internal["url"];
+  JsObject _internal;
 }
 
 class ServiceWorker {
   ServiceWorker() {
-    context["self"].callMethod("addEventListener",["activate", (e) {
-      _onActivate.add({});
-    }]);
-    context["self"].callMethod("addEventListener",["fetch", (e) {
-      _onFetch.add({});
-    }]);
-    context["self"].callMethod("addEventListener",["install", (e) {
-      _onInstall.add({});
-    }]);
-    context["self"].callMethod("addEventListener",["message", (e) {
-      _onMessage.add(new MessageEvent(
-          e["data"], e["origin"], e["lastEventId"], e["source"]));
-    }]);
+    context["self"].callMethod("addEventListener", [
+      "activate",
+      (e) {
+        _onActivate.add({});
+      }
+    ]);
+    context["self"].callMethod("addEventListener", [
+      "fetch",
+      (e) {
+        _onFetch.add({});
+      }
+    ]);
+    context["self"].callMethod("addEventListener", [
+      "install",
+      (e) {
+        _onInstall.add({});
+      }
+    ]);
+    context["self"].callMethod("addEventListener", [
+      "message",
+      (e) {
+        _onMessage.add(new MessageEvent(e["data"], e["origin"],
+            e["lastEventId"], new ServiceWorkerClient.internal(e["source"])));
+      }
+    ]);
     /*context["this"]["onpushsubscriptionchange"] = (e){
       _onPushSubscriptionChange.add({});
     };
     context["this"]["onpush"] = (e){
       _onPush.add({});
     };*/
-    context["self"].callMethod("addEventListener",["onsync", (e) {
-      _onSync.add({});
-    }]);
+    context["self"].callMethod("addEventListener", [
+      "onsync",
+      (e) {
+        _onSync.add({});
+      }
+    ]);
   }
 
-  List<ServiceWorkerClient> get clients {
-    return [];
+  /// Gets a service worker client matching a given id.
+
+  Future<ServiceWorkerClient> client(String id) async {
+    Completer c = new Completer();
+    JsObject promise = context["self"]["clients"].callMethod("get", [id]);
+    promise.callMethod("then", [
+      (swclient) {
+        var sw = new ServiceWorkerClient.internal(swclient);
+        c.complete(sw);
+      }
+    ]);
+    return await c.future;
+  }
+
+  /// Gets a list of service worker clients.
+
+  Future<List<ServiceWorkerClient>> clients(
+      {bool includeUncontrolled: false, String type: "all"}) async {
+    Completer c = new Completer();
+    JsObject options = new JsObject.jsify(
+        {"includeUncontrolled": includeUncontrolled, "type": type});
+    JsObject promise =
+        context["self"]["clients"].callMethod("matchAll", [options]);
+    promise.callMethod("then", [
+      (JsArray jsclients) {
+        var clients = [];
+        for (JsObject client in jsclients) {
+          clients.add(new ServiceWorkerClient.internal(client));
+        }
+        c.complete(clients);
+      }
+    ]);
+    return await c.future;
   }
 
   Stream get onActivate => _onActivate.stream;

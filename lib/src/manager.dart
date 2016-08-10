@@ -1,30 +1,34 @@
 library ServiceWorkerManager.Manager;
 
 import 'dart:async';
-//import 'dart:js';
+import 'dart:js';
 import 'dart:html' as HTML;
 import 'workerinterface.dart';
 
 ServiceWorkerManager serviceWorkerManager = new ServiceWorkerManager();
 
 class ServiceWorkerManager {
-  Future<ServiceWorker> register(String scriptUrl) async {
-    /*JsObject nav = new JsObject.fromBrowserObject(
+  Future<ServiceWorker> register(String scriptUrl) {
+    _register = new Completer();
+    JsObject nav = new JsObject.fromBrowserObject(
             (new JsObject.fromBrowserObject(context['window']))["navigator"]);
     if (nav.hasProperty("serviceWorker")) {
       JsObject sw = new JsObject.fromBrowserObject(nav["serviceWorker"]);
       JsObject swf = sw.callMethod("register",[scriptUrl]);
       JsObject swfr = swf.callMethod("then",[(reg){
-
+        ServiceWorker sw = new ServiceWorker.internal(reg);
+        _register.complete(sw);
       }]);
-      swfr.callMethod(method)
-    }*/
+      //swfr.callMethod(method)
+    }
+    return _register.future;
 
-    HTML.ServiceWorkerRegistration reg =
+    /*var reg =
         await HTML.window.navigator.serviceWorker.register(scriptUrl);
-    ServiceWorker sw = new ServiceWorker();
-    sw._internal = reg;
-    // register handlers
-    return sw;
+        print(reg);
+    ServiceWorker sw = new ServiceWorker.internal(reg);
+    return sw;*/
   }
+
+  Completer _register;
 }
