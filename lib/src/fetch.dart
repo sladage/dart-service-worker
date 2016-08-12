@@ -387,3 +387,67 @@ class Request implements JsProxyObject {
 
   JsObject _internal;
 }
+
+Future<Reponse> fetch({Request request,String url,RequestMethod method,
+Headers headers,
+body,
+RequestMode mode,
+RequestCredentials credentials,
+CacheMode cache,
+RedirectMode redirect,
+String referrer,
+String integrity}) async {
+  if (request == null && url == null) return null;
+  var options = {};
+  if (method != null) {
+    if (method == RequestMethod.GET)
+      options["method"] = "GET";
+    else if (mode == RequestMethod.POST) options["method"] = "POST";
+  }
+  if (headers != null) options["headers"] = headers._internal;
+  if (body != null) options["body"] = body;
+  if (mode != null) {
+    if (mode == RequestMode.CORS)
+      options["mode"] = "cors";
+    else if (mode == RequestMode.NO_CORS)
+      options["mode"] = "no-cors";
+    else if (mode == RequestMode.SAME_ORIGIN)
+      options["mode"] = "same-origin";
+    else if (mode == RequestMode.NAVIGATE) options["mode"] = "navigate";
+  }
+  if (credentials != null) {
+    if (credentials == RequestCredentials.OMIT)
+      options["credentials"] = "omit";
+    else if (credentials == RequestCredentials.SAME_ORIGIN)
+      options["credentials"] = "same-origin";
+    else if (credentials == RequestCredentials.INCLUDE)
+      options["credentials"] = "include";
+  }
+  if (cache != null) {
+    if (cache == CacheMode.DEFAULT)
+      options["cache"] = "default";
+    else if (cache == CacheMode.NO_STORE)
+      options["cache"] = "same-origin";
+    else if (cache == CacheMode.RELOAD)
+      options["cache"] = "reload";
+    else if (cache == CacheMode.NO_CACHE)
+      options["cache"] = "no-cache";
+    else if (cache == CacheMode.FORCE_CACHE) options["cache"] = "force-cache";
+  }
+  if (redirect != null) {
+    if (redirect == RedirectMode.FOLLOW)
+      options["redirect"] = "default";
+    else if (redirect == RedirectMode.ERROR)
+      options["redirect"] = "error";
+    else if (redirect == RedirectMode.MANUAL) options["redirect"] = "manual";
+  }
+  if (referrer != null) options["referrer"] = referrer;
+  if (integrity != null) options["integrity"] = integrity;
+  var req = (request != null) ? request.toJs() : url;
+  Completer c = new Completer();
+  JsObject promise = context.callMethod("fetch",[req,options]);
+  promise.callMethod("then",[(jsresponse){
+    c.complete(new Response.internal(jsresponse));
+  }]);
+  return await c.future;
+}

@@ -12,17 +12,20 @@ class Cache implements JsProxyObject {
   /// Returns a [Future] that resolves to the response associated with the
   /// first matching request in the [Cache] object.
 
-  Future<Response> match(Request request,
-      {bool ignoreSearch: false,
-      bool ignoreMethod: false,
-      bool ignoreVary: false}) async {
+  Future<Response> match(
+      {Request request,
+      String url,
+      bool ignoreSearch,
+      bool ignoreMethod,
+      bool ignoreVary}) async {
+    if (request == null && url == null) return null;
     Completer c = new Completer();
-    JsObject options = new JsObject.jsify({
-      "ignoreSearch": ignoreSearch,
-      "ignoreMethod": ignoreMethod,
-      "ignoreVary": ignoreVary
-    });
-    JsObject promise = _internal.callMethod("match", [request.toJs(), options]);
+    var req = (request != null) ? request.toJs() : url;
+    var options = {};
+    if (ignoreSearch != null) options["ignoreSearch"] = ignoreSearch;
+    if (ignoreMethod != null) options["ignoreMethod"] = ignoreMethod;
+    if (ignoreVary != null) options["ignoreVary"] = ignoreVary;
+    JsObject promise = _internal.callMethod("match", [req, options]);
     promise.callMethod("then", [
       (response) {
         c.complete(new Response.internal(response));
@@ -34,17 +37,20 @@ class Cache implements JsProxyObject {
   /// Returns a [Future] that resolves to an array of all matching requests
   /// in the [Cache] object.
 
-  Future<List<Response>> matchAll(Request request,
-      {bool ignoreSearch: false,
-      bool ignoreMethod: false,
-      bool ignoreVary: false}) async {
+  Future<List<Response>> matchAll(
+      {Request request,
+      String url,
+      bool ignoreSearch,
+      bool ignoreMethod,
+      bool ignoreVary}) async {
+    if (request == null && url == null) return null;
     Completer c = new Completer();
-    JsObject options = new JsObject.jsify({
-      "ignoreSearch": ignoreSearch,
-      "ignoreMethod": ignoreMethod,
-      "ignoreVary": ignoreVary
-    });
-    JsObject promise = _internal.callMethod("match", [request.toJs(), options]);
+    var req = (request != null) ? request.toJs() : url;
+    var options = {};
+    if (ignoreSearch != null) options["ignoreSearch"] = ignoreSearch;
+    if (ignoreMethod != null) options["ignoreMethod"] = ignoreMethod;
+    if (ignoreVary != null) options["ignoreVary"] = ignoreVary;
+    JsObject promise = _internal.callMethod("match", [req, options]);
     promise.callMethod("then", [
       (jsresponses) {
         var responses = [];
@@ -61,28 +67,114 @@ class Cache implements JsProxyObject {
   /// given cache. This is fuctionally equivalent to calling fetch(), then
   /// using put() to add the results to the cache.
 
-  Future add({Request request,String url}) async {
+  Future add({Request request, String url}) async {
     if (request == null && url == null) return;
-    var req;
-    if (request != null)
-      req = request.toJs();
-    else
-      req = url;
+    var req = (request != null) ? request.toJs() : url;
     Completer c = new Completer();
     JsObject promise = _internal.callMethod("add", [req]);
     promise.callMethod("then", [
       () {
-        return;
+        c.complete();
       }
     ]);
     await c.future;
     return;
   }
 
+  /// Takes an array of URLs, retrieves them, and adds the resulting response
+  /// objects to the given cache.
+
+  Future addAll({List<Request> requests, List<String> urls}) async {
+    if (requests == null && urls == null) return;
+    var req;
+    if (requests != null) {
+      req = [];
+      for (Request r in requests) {
+        req.add(r.toJs());
+      }
+    } else
+      req = urls;
+    Completer c = new Completer();
+    JsObject promise = _internal.callMethod("addAll", [new JsArray.from(req)]);
+    promise.callMethod("then", [
+      () {
+        c.complete();
+      }
+    ]);
+    await c.future;
+    return;
+  }
+
+  /// Takes both a request and its response and adds it to the given cache.
+
+  Future put(Request request, Response response) async {
+    Completer c = new Completer();
+    JsObject promise =
+        _internal.callMethod("put", [request.toJs(), response.toJs()]);
+    promise.callMethod("then", [
+      () {
+        c.complete();
+      }
+    ]);
+    await c.future;
+    return;
+  }
+
+  /// Finds the [Cache] entry whose key is the request, and if found, deletes
+  /// the [Cache] entry and returns a [Future] that resolves to `true`.
+  /// If no [Cache] entry is found, it returns `false`.
+
+  Future delete(
+      {Request request,
+      String url,
+      bool ignoreSearch,
+      bool ignoreMethod,
+      bool ignoreVary}) async {
+    if (request == null && url == null) return;
+    Completer c = new Completer();
+    var req = (request != null) ? request.toJs() : url;
+    var options = {};
+    if (ignoreSearch != null) options["ignoreSearch"] = ignoreSearch;
+    if (ignoreMethod != null) options["ignoreMethod"] = ignoreMethod;
+    if (ignoreVary != null) options["ignoreVary"] = ignoreVary;
+    JsObject promise = _internal.callMethod("put", [req, options]);
+    promise.callMethod("then", [
+      () {
+        c.complete();
+      }
+    ]);
+    await c.future;
+    return;
+  }
+
+  /// Returns a [Future] that resolves to an array of [Cache] keys.
+
+  Future<List<Request>> keys(
+      {bool ignoreSearch, bool ignoreMethod, bool ignoreVary}) async {
+    Completer c = new Completer();
+    var options = {};
+    if (ignoreSearch != null) options["ignoreSearch"] = ignoreSearch;
+    if (ignoreMethod != null) options["ignoreMethod"] = ignoreMethod;
+    if (ignoreVary != null) options["ignoreVary"] = ignoreVary;
+    JsObject promise = _internal.callMethod("put", [options]);
+    promise.callMethod("then", [
+      (jskeys) {
+        var keys = [];
+        for (JsObject key in jskeys) {
+          keys.add(new Request.fromInternal(key));
+        }
+        c.complete(keys);
+      }
+    ]);
+    return await c.future;
+  }
+
   JsObject toJs() => _internal;
 
   JsObject _internal;
 }
+
+CacheStorage caches = new CacheStorage.internal(context["caches"]);
 
 class CacheStorage implements JsProxyObject {
   CacheStorage.internal(this._internal) {}
@@ -122,6 +214,7 @@ class CacheStorage implements JsProxyObject {
     JsObject promise = _internal.callMethod("match", [request.toJs(), options]);
     promise.callMethod("then", [
       (response) {
+        if (response == null) c.complete(null);
         c.complete(new Response.internal(response));
       }
     ]);

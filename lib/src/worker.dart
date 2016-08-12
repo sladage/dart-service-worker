@@ -3,6 +3,8 @@ library ServiceWorker.Worker;
 import 'dart:async';
 import 'dart:js';
 import 'shared.dart';
+import 'fetch.dart';
+import 'util.dart';
 
 class ServiceWorkerClient {
   ServiceWorkerClient.internal(this._internal) {}
@@ -20,6 +22,20 @@ class ServiceWorkerClient {
   JsObject _internal;
 }
 
+class FetchEvent {
+  FetchEvent.internal(this._internal) {}
+
+  Request get request => new Request.fromInternal(_internal["request"]);
+  String get clientId => _internal["clientId"];
+  bool get isReload => _internal["isReload"];
+
+  void respondWith(Future<Response> r) {
+    _internal.callMethod("respondWith",[new Promise.fromFuture(r).toJs()]);
+  }
+
+  JsObject _internal;
+}
+
 class ServiceWorker {
   ServiceWorker() {
     context["self"].callMethod("addEventListener", [
@@ -31,7 +47,7 @@ class ServiceWorker {
     context["self"].callMethod("addEventListener", [
       "fetch",
       (e) {
-        _onFetch.add({});
+        _onFetch.add(new FetchEvent.internal(e));
       }
     ]);
     context["self"].callMethod("addEventListener", [
