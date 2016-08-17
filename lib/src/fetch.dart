@@ -74,14 +74,14 @@ class Headers implements JsProxyObject {
   /// Creates a new Headers object from an existing [Headers] object.
 
   Headers.withHeaders(Headers headers) {
-    _internal = new JsObject(context["Headers"],[headers._internal]);
+    _internal = new JsObject(context["Headers"], [headers._internal]);
   }
 
   /// Creates a new Headers object and populate them with key/value pairs
   /// from the given [Map].
 
   Headers.withMap(Map headers) {
-    _internal = new JsObject(context["Headers"],[headers]);
+    _internal = new JsObject(context["Headers"], [headers]);
   }
 
   Headers.internal(this._internal) {}
@@ -97,7 +97,7 @@ class Headers implements JsProxyObject {
     _internal.callMethod("delete", [name]);
   }
 
-  Map<String,String> entries() {
+  Map<String, String> entries() {
     var entries = {};
     JsArray it = _internal.callMethod("entries");
     for (JsArray pair in it) {
@@ -137,6 +137,26 @@ class Headers implements JsProxyObject {
 }
 
 class Response implements JsProxyObject {
+  Response(
+      {String strData,
+      Uint8List byteData,
+      int status: HttpStatus.OK,
+      String statusText,
+      Headers headers}) {
+    var options = {"status": status};
+    var body;
+    if (strData != null) body = strData;
+    if (byteData != null) {
+      body = new JsObject(context["BufferSource"], [byteData]);
+    }
+    if (statusText != null) options["statusText"] = statusText;
+    if (headers != null) options["headers"] = headers.toJs();
+    var args = [];
+    if (body != null) args.add(body);
+    args.add(options);
+    _internal = new JsObject(context["Response"], args);
+  }
+
   Response.internal(this._internal) {}
 
   /// Takes a [Response] stream and reads it to completion.
@@ -174,7 +194,7 @@ class Response implements JsProxyObject {
 
   Future<String> text() async {
     Completer c = new Completer();
-    JsObject promise = _internal.callMethod("arrayBuffer", []);
+    JsObject promise = _internal.callMethod("text", []);
     promise.callMethod("then", [
       (buffer) {
         c.complete(buffer as String);
@@ -388,15 +408,18 @@ class Request implements JsProxyObject {
   JsObject _internal;
 }
 
-Future<Reponse> fetch({Request request,String url,RequestMethod method,
-Headers headers,
-body,
-RequestMode mode,
-RequestCredentials credentials,
-CacheMode cache,
-RedirectMode redirect,
-String referrer,
-String integrity}) async {
+Future<Response> fetch(
+    {Request request,
+    String url,
+    RequestMethod method,
+    Headers headers,
+    body,
+    RequestMode mode,
+    RequestCredentials credentials,
+    CacheMode cache,
+    RedirectMode redirect,
+    String referrer,
+    String integrity}) async {
   if (request == null && url == null) return null;
   var options = {};
   if (method != null) {
@@ -445,9 +468,11 @@ String integrity}) async {
   if (integrity != null) options["integrity"] = integrity;
   var req = (request != null) ? request.toJs() : url;
   Completer c = new Completer();
-  JsObject promise = context.callMethod("fetch",[req,options]);
-  promise.callMethod("then",[(jsresponse){
-    c.complete(new Response.internal(jsresponse));
-  }]);
+  JsObject promise = context.callMethod("fetch", [req, options]);
+  promise.callMethod("then", [
+    (jsresponse) {
+      c.complete(new Response.internal(jsresponse));
+    }
+  ]);
   return await c.future;
 }

@@ -12,19 +12,23 @@ class Promise implements JsProxyObject {
     var exec = (resolve,reject){
       _resolve = resolve;
       _reject = reject;
+      _ready.complete();
     };
     _internal = new JsObject(context["Promise"],[exec]);
-    f.then((v){
+    f.then((v) async {
       var ret = (v is JsProxyObject) ? v.toJs() : v;
-      _resolve(ret);
-    }).catchError((e){
-      _reject();
+      await _ready.future;
+      _resolve.apply([ret]);
+    }).catchError((e) async {
+      await _ready.future;
+      _reject.apply([]);
     });
   }
 
   JsObject toJs() => _internal;
 
-  var _resolve;
-  var _reject;
+  JsFunction _resolve;
+  JsFunction _reject;
   JsObject _internal;
+  Completer _ready = new Completer();
 }

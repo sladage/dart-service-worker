@@ -23,17 +23,20 @@ class ServiceWorkerClient {
 }
 
 class FetchEvent {
-  FetchEvent.internal(this._internal) {}
-
-  Request get request => new Request.fromInternal(_internal["request"]);
-  String get clientId => _internal["clientId"];
-  bool get isReload => _internal["isReload"];
-
-  void respondWith(Future<Response> r) {
-    _internal.callMethod("respondWith",[new Promise.fromFuture(r).toJs()]);
+  FetchEvent.internal(JsObject js, this.request, this.clientId, this.isReload) {
+    js.callMethod(
+        "respondWith", [new Promise.fromFuture(_responder.future).toJs()]);
   }
 
-  JsObject _internal;
+  final Request request;
+  final String clientId;
+  final bool isReload;
+
+  Future respondWith(Future<Response> r) async {
+    _responder.complete(await r);
+  }
+
+  Completer _responder = new Completer();
 }
 
 class ServiceWorker {
@@ -47,7 +50,12 @@ class ServiceWorker {
     context["self"].callMethod("addEventListener", [
       "fetch",
       (e) {
-        _onFetch.add(new FetchEvent.internal(e));
+        JsObject js = new JsObject.fromBrowserObject(e);
+        _onFetch.add(new FetchEvent.internal(
+            js,
+            new Request.fromInternal(js["request"]),
+            js["clientId"],
+            js["isReload"]));
       }
     ]);
     context["self"].callMethod("addEventListener", [

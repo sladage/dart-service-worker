@@ -73,7 +73,7 @@ class Cache implements JsProxyObject {
     Completer c = new Completer();
     JsObject promise = _internal.callMethod("add", [req]);
     promise.callMethod("then", [
-      () {
+      (_) {
         c.complete();
       }
     ]);
@@ -97,7 +97,7 @@ class Cache implements JsProxyObject {
     Completer c = new Completer();
     JsObject promise = _internal.callMethod("addAll", [new JsArray.from(req)]);
     promise.callMethod("then", [
-      () {
+      (_) {
         c.complete();
       }
     ]);
@@ -112,7 +112,7 @@ class Cache implements JsProxyObject {
     JsObject promise =
         _internal.callMethod("put", [request.toJs(), response.toJs()]);
     promise.callMethod("then", [
-      () {
+      (_) {
         c.complete();
       }
     ]);
@@ -139,7 +139,7 @@ class Cache implements JsProxyObject {
     if (ignoreVary != null) options["ignoreVary"] = ignoreVary;
     JsObject promise = _internal.callMethod("put", [req, options]);
     promise.callMethod("then", [
-      () {
+      (_) {
         c.complete();
       }
     ]);
@@ -174,7 +174,7 @@ class Cache implements JsProxyObject {
   JsObject _internal;
 }
 
-CacheStorage caches = new CacheStorage.internal(context["caches"]);
+final CacheStorage caches = new CacheStorage.internal(context["caches"]);
 
 class CacheStorage implements JsProxyObject {
   CacheStorage.internal(this._internal) {}
@@ -214,7 +214,10 @@ class CacheStorage implements JsProxyObject {
     JsObject promise = _internal.callMethod("match", [request.toJs(), options]);
     promise.callMethod("then", [
       (response) {
-        if (response == null) c.complete(null);
+        if (response == null) {
+          c.complete(null);
+          return;
+        }
         c.complete(new Response.internal(response));
       }
     ]);

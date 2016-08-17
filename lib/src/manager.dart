@@ -5,7 +5,7 @@ import 'dart:js';
 import 'dart:html' as HTML;
 import 'workerinterface.dart';
 
-ServiceWorkerManager serviceWorkerManager = new ServiceWorkerManager();
+final ServiceWorkerManager serviceWorkerManager = new ServiceWorkerManager();
 
 class ServiceWorkerManager {
   Future<ServiceWorker> register(String scriptUrl) {
@@ -20,6 +20,8 @@ class ServiceWorkerManager {
         _register.complete(sw);
       }]);
       //swfr.callMethod(method)
+    } else {
+      throw "Not supported";
     }
     return _register.future;
 
