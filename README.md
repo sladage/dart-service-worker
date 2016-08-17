@@ -1,8 +1,8 @@
-= Dart Service Worker library
+# Dart Service Worker library
 
 Write Web Apps using Dart with Service Worker support. (Currently only supports compilation to javascript)
 
-== Usage
+## Usage
 
 Landing page:
 
