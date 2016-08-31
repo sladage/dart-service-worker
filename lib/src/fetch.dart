@@ -153,7 +153,7 @@ class Response implements JsProxyObject {
     if (headers != null) options["headers"] = headers.toJs();
     var args = [];
     if (body != null) args.add(body);
-    args.add(options);
+    args.add(new JsObject.jsify(options));
     _internal = new JsObject(context["Response"], args);
   }
 
