@@ -11,6 +11,21 @@ part 'indexeddb/cursor.dart';
 part 'indexeddb/objectstore.dart';
 part 'indexeddb/transaction.dart';
 
+Future _requestCall(JsObject caller, String fn, List args, {bool useResult:false}) {
+  Completer c = new Completer();
+  JsObject request = caller.callMethod(fn, args);
+  request["onsuccess"] = (e) {
+    if (useResult)
+      c.complete(request["result"]);
+    else
+      c.complete();
+  };
+  request["onerror"] = (e) {
+    c.completeError(request["error"]);
+  };
+  return c.future;
+}
+
 final IndexedDB indexedDB = context.hasProperty("window")
     ? new IndexedDB._internal(new JsObject.fromBrowserObject(
         new JsObject.fromBrowserObject(context["window"])["indexedDB"]))

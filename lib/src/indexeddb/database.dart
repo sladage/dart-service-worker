@@ -1,15 +1,22 @@
 part of IndexedDB;
 
-
 class Database implements JsProxyObject {
   Database._internal(this._js) {}
 
   void close() {}
 
   ObjectStore createObjectStore(String name,
-      {String keyPath, bool autoIncrement}) {}
+      {String keyPath, bool autoIncrement}) {
+    var options = {};
+    if (keyPath != null) options["keyPath"] = keyPath;
+    if (autoIncrement != null) options["autoIncrement"] = autoIncrement;
+    JsObject ret = _js
+        .callMethod("createObjectStore", [name, new JsObject.jsify(options)]);
+    return new ObjectStore._internal(ret);
+  }
 
-  void deleteObjectStore(String name) {}
+  void deleteObjectStore(String name) =>
+      _js.callMethod("deleteObjectStore", [name]);
 
   Transaction transaction(List<String> storeNames, AccessMode mode) {
     String modestr = "readonly";
@@ -18,7 +25,7 @@ class Database implements JsProxyObject {
         _js.callMethod("transaction", [new JsArray.from(storeNames), modestr]));
   }
 
-  JsObject toJS() => _js;
+  JsObject toJs() => _js;
 
   JsObject _js;
 }
