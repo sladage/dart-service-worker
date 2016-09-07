@@ -6,7 +6,7 @@ class ObjectStore implements JsProxyObject {
   /// Creates a structured clone of the value, and stores the cloned value in
   /// the object store. This is for adding new records to an object store.
 
-  Future add(value, [String key]) {
+  Future add(String key, value) {
     Completer c = new Completer();
     var vars = [value];
     if (key != null) vars.add(key);

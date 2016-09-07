@@ -11,7 +11,8 @@ part 'indexeddb/cursor.dart';
 part 'indexeddb/objectstore.dart';
 part 'indexeddb/transaction.dart';
 
-Future _requestCall(JsObject caller, String fn, List args, {bool useResult:false}) {
+Future _requestCall(JsObject caller, String fn, List args,
+    {bool useResult: false}) {
   Completer c = new Completer();
   JsObject request = caller.callMethod(fn, args);
   request["onsuccess"] = (e) {
@@ -45,6 +46,20 @@ class IndexedDB implements JsProxyObject {
     JsObject request = _js.callMethod("open", vars);
     Completer c = new Completer();
 
+    if (onUpgradeNeeded != null) {
+      request["onupgradeneeded"] = (e) {
+        var event = new JsObject.fromBrowserObject(e);
+        onUpgradeNeeded(new VersionChangeEvent(
+            event["oldVersion"],
+            event["newVersion"],
+            new Database._internal(event["target"]["result"])));
+      };
+    }
+
+    if (onBlocked != null) {
+      request["onblocked"] = (JsObject event) {};
+    }
+
     request["onerror"] = (JsObject event) {
       c.completeError("Error opening database.");
     };
@@ -52,17 +67,6 @@ class IndexedDB implements JsProxyObject {
     request["onsuccess"] = (JsObject event) {
       c.complete(new Database._internal(request["result"]));
     };
-
-    if (onUpgradeNeeded != null) {
-      request["onupgradeneeded"] = (JsObject event) {
-        onUpgradeNeeded(new VersionChangeEvent(
-            event["oldVersion"], event["newVersion"], event["target"]));
-      };
-    }
-
-    if (onBlocked != null) {
-      request["onblocked"] = (JsObject event) {};
-    }
 
     return c.future;
   }
@@ -72,10 +76,9 @@ class IndexedDB implements JsProxyObject {
   JsObject _js;
 }
 
-
 class VersionChangeEvent {
-  VersionChangeEvent(this.oldVersion, this.newVersion, this.target) {}
+  VersionChangeEvent(this.oldVersion, this.newVersion, this.database) {}
   final int oldVersion;
   final int newVersion;
-  final target;
+  final Database database;
 }
