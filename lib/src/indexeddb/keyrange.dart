@@ -2,23 +2,23 @@ part of IndexedDB;
 
 class KeyRange implements JsProxyObject {
   /// Creates a new key range with upper and lower bounds.
-  KeyRange.bound(String lower, String upper, {bool lowerOpen:false,bool upperOpen:false}) {
+  KeyRange.bound(lower, upper, {bool lowerOpen:false,bool upperOpen:false}) {
     _js = new JsObject(context["IDBKeyRange"]["bound"],[lower,upper,lowerOpen,upperOpen]);
   }
 
-  KeyRange.only(String key) {
+  KeyRange.only(key) {
     _js = new JsObject(context["IDBKeyRange"]["only"],[key]);
   }
 
-  KeyRange.lowerBound(String bound, {bool open: false}) {
+  KeyRange.lowerBound(bound, {bool open: false}) {
     _js = new JsObject(context["IDBKeyRange"]["lowerBound"],[bound]);
   }
 
-  KeyRange.upperBound(String bound, {bool open: false}) {
+  KeyRange.upperBound(bound, {bool open: false}) {
     _js = new JsObject(context["IDBKeyRange"]["upperBound"],[bound]);
   }
 
-  bool includes(String key) => _js.callMethod("includes",[key]);
+  bool includes(key) => _js.callMethod("includes",[key]);
 
   String get lower => _js["lower"];
   bool get lowerOpen => _js["lowerOpen"];

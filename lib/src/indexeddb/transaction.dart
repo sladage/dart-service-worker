@@ -25,8 +25,8 @@ class Transaction implements JsProxyObject {
     _js.callMethod("abort");
   }
 
-  ObjectStore objectStore() =>
-      new ObjectStore._internal(_js.callMethod("objectStore"));
+  ObjectStore objectStore(String name) =>
+      new ObjectStore._internal(_js.callMethod("objectStore",[name]));
 
   Database get db => new Database._internal(_js["db"]);
 

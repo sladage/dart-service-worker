@@ -21,7 +21,7 @@ class Cursor implements JsProxyObject {
   /// Advances the cursor to the next position along its direction, to the item
   /// whose key matches the optional [key] parameter.
 
-  void next([String key]) {
+  void next([key]) {
     _js.callMethod("continue",key == null ? [] : [key]);
   }
 

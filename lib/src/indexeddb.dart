@@ -37,10 +37,12 @@ enum AccessMode { READ_ONLY, READ_WRITE }
 class IndexedDB implements JsProxyObject {
   IndexedDB._internal(this._js) {}
 
+  /// The current method to request opening a connection to a database.
+
   Future<Database> open(String name,
       {int version,
       void onUpgradeNeeded(VersionChangeEvent),
-      void onBlocked(Event)}) {
+      void onBlocked(dynamic)}) {
     var vars = [name];
     if (version != null) vars.add(version);
     JsObject request = _js.callMethod("open", vars);
@@ -57,7 +59,9 @@ class IndexedDB implements JsProxyObject {
     }
 
     if (onBlocked != null) {
-      request["onblocked"] = (JsObject event) {};
+      request["onblocked"] = (event) {
+        onBlocked(event);
+      };
     }
 
     request["onerror"] = (JsObject event) {
@@ -70,6 +74,35 @@ class IndexedDB implements JsProxyObject {
 
     return c.future;
   }
+
+  /// A method to request the deletion of a database.
+
+  Future deleteDatabase(String name, {void onBlocked(dynamic)}) {
+    var vars = [name];
+    JsObject request = _js.callMethod("deleteDatabase", vars);
+    Completer c = new Completer();
+
+    if (onBlocked != null) {
+      request["onblocked"] = (event) {
+        onBlocked(event);
+      };
+    }
+
+    request["onerror"] = (JsObject event) {
+      c.completeError("Error deleting database.");
+    };
+
+    request["onsuccess"] = (JsObject event) {
+      c.complete();
+    };
+
+    return c.future;
+  }
+
+  /// A method that compares two keys and returns a result indicating which
+  /// one is greater in value.
+
+  int cmp(first,second) => _js.callMethod("cmd",[first,second]);
 
   JsObject toJs() => _js;
 

@@ -83,7 +83,7 @@ class Index implements JsProxyObject {
   /// Creates a cursor over the specified key range.
 
   Future<CursorWithValue> openCursor(
-      {String key, KeyRange range, CursorDirection direction}) {
+      {key, KeyRange range, CursorDirection direction}) {
     var vars = [];
     if (key != null || range != null) {
       vars.add(key != null ? key : range);
