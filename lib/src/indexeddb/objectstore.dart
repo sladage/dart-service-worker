@@ -79,12 +79,12 @@ class ObjectStore implements JsProxyObject {
   /// Returns the store object store selected by the specified key.
   /// This is for retrieving specific records from an object store.
 
-  Future get(String key) => _requestCall(_js, "get", [key]);
+  Future get(String key) => _requestCall(_js, "get", [key], useResult: true);
 
   /// Returns the store object store selected by the specified range.
   /// This is for retrieving specific records from an object store.
 
-  Future getRange(KeyRange range) => _requestCall(_js, "get", [range.toJs()]);
+  Future getRange(KeyRange range) => _requestCall(_js, "get", [range.toJs()], useResult: true);
 
   /// Retrieves all objects in the object store matching the specified
   /// parameter or all objects in the store if no parameters are given.
@@ -157,7 +157,7 @@ class ObjectStore implements JsProxyObject {
   /// Returns a new IDBCursorWithValue object. Used for iterating through an
   /// object store by primary key with a cursor.
 
-  Future<CursorWithValue> openCursor(
+  Stream<CursorWithValue> openCursor(
       {String key, KeyRange range, CursorDirection direction}) {
     var vars = [];
     if (key != null || range != null) {
@@ -171,21 +171,25 @@ class ObjectStore implements JsProxyObject {
       vars.add(dir);
     }
 
-    Completer c = new Completer();
+    StreamController c = new StreamController();
     JsObject request = _js.callMethod("openCursor", vars);
     request["onsuccess"] = (e) {
-      c.complete(new CursorWithValue._internal(request["result"]));
+      if (request["result"] == null)
+        c.close();
+      else
+        c.add(new CursorWithValue._internal(request["result"]));
     };
     request["onerror"] = (e) {
-      c.completeError(request["error"]);
+      //c.completeError(request["error"]);
+      c.close();
     };
-    return c.future;
+    return c.stream;
   }
 
   /// Returns a new IDBCursorWithValue. Used for iterating through
   /// an object store with a key.
 
-  Future<CursorWithValue> openKeyCursor(
+  Stream<CursorWithValue> openKeyCursor(
       {KeyRange range, CursorDirection direction}) {
     var vars = [];
     if (range != null) {
@@ -199,15 +203,19 @@ class ObjectStore implements JsProxyObject {
       vars.add(dir);
     }
 
-    Completer c = new Completer();
+    StreamController c = new StreamController();
     JsObject request = _js.callMethod("openKeyCursor", vars);
     request["onsuccess"] = (e) {
-      c.complete(new CursorWithValue._internal(request["result"]));
+      if (request["result"] == null)
+        c.close();
+      else
+        c.add(new CursorWithValue._internal(request["result"]));
     };
     request["onerror"] = (e) {
-      c.completeError(request["error"]);
+      //c.completeError(request["error"]);
+      c.close();
     };
-    return c.future;
+    return c.stream;
   }
 
   /// Creates a structured clone of the value, and stores the cloned value in

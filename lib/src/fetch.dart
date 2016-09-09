@@ -147,7 +147,8 @@ class Response implements JsProxyObject {
     var body;
     if (strData != null) body = strData;
     if (byteData != null) {
-      body = new JsObject(context["BufferSource"], [byteData]);
+      JsObject data = new JsObject.fromBrowserObject(byteData);
+      body = new JsObject(context["Blob"], [data["buffer"]]);
     }
     if (statusText != null) options["statusText"] = statusText;
     if (headers != null) options["headers"] = headers.toJs();
